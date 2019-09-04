@@ -1,3 +1,12 @@
+#Changes from this fork:
+The romlist can now be 
+- filtered by minimum star ratings (own and community)
+- exclude specific filenames
+- exclude specific regions (additional to hide specific regions)
+
+
+##Original Text:
+
 # launchbox_retropie_export_ext
   Python script to export your Launchbox game database to Retropie / Emulationstation format.
   Based on [launchbox-retropie-export](https://forums.launchbox-app.com/files/file/860-launchbox-retropie-export/) by user
