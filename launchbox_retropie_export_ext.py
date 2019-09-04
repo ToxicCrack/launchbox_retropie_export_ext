@@ -7,12 +7,12 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
 # Change the path to your launchbox folder.
-lb_dir = r'X:\A3_Games\00_Resources\00_Launchbox\LaunchBox'
+lb_dir = r'D:\Users\ToxicCrack\LaunchBox'
 
 # Script output directory. (for Roms, images and xml files)
 # Copy the gamelists to ~/.emulationstation/gamelists/
 # Copy the roms and images to ~/RetroPie/roms/
-output_dir = r'X:\output'
+output_dir = r'D:\output'
 
 # Restrict export to only Launchbox favorites.
 favorites_only=False
@@ -20,58 +20,87 @@ favorites_only=False
 game_broken=True
 # Hide games which are listed as hidden in Launchbox.
 game_hide=True
+
+# minimum ratings
+# set it to 0.0 to disable
+min_rating = 0.0
+min_community_rating = 3.5
 	
 # Choose platforms (comment/uncomment as needed).
 # The first string in each pair is the Launchbox platform filename, the second is the RetroPie folder name.
-# Arcade is disabled in this example.
 platforms = dict()
 #platforms["Arcade"] = "arcade"
-platforms["Nintendo 64"] = "n64"
-platforms["Nintendo Entertainment System"] = "nes"
-platforms["Nintendo Game Boy Advance"] = "gba"
-platforms["Nintendo Game Boy Color"] = "gbc"
-platforms["Nintendo Game Boy"] = "gb"
-platforms["Sega 32X"] = "sega32x"
-platforms["Sega Game Gear"] = "gamegear"
-platforms["Sega Genesis"] = "genesis"
-platforms["Sega Master System"] = "mastersystem"
-platforms["Sony Playstation"] = "psx"
+#platforms["Nintendo 64"] = "n64"
+#platforms["Nintendo Entertainment System"] = "nes"
+#platforms["Nintendo Game Boy Advance"] = "gba"
+#platforms["Nintendo Game Boy Color"] = "gbc"
+#platforms["Nintendo Game Boy"] = "gb"
+#platforms["Sega 32X"] = "sega32x"
+#platforms["Sega Game Gear"] = "gamegear"
+#platforms["Sega Genesis"] = "genesis"
+#platforms["Sega Master System"] = "mastersystem"
+#platforms["Sony Playstation"] = "psx"
 platforms["Super Nintendo Entertainment System"] = "snes"
 
 # Comment/uncomment to change content rating for kids.
-# M - Mature, Not Rated and RP - Rating Pending disabled. The last two to be on the safe side.
 kidrating = dict()
 kidrating["E - Everyone"] = "true"
 kidrating["EC - Early Childhood"] = "true"
 kidrating["E10+ - Everyone 10+"] = "true"
 kidrating["T - Teen"] = "true"
-#kidrating["M - Mature"] = "true"
-#kidrating["Not Rated"] = "true"
-#kidrating["RP - Rating Pending"] = "true"
+kidrating["M - Mature"] = "true"
+kidrating["Not Rated"] = "true"
+kidrating["RP - Rating Pending"] = "true"
 
 # Comment/uncomment to hide specific regions.
-# Australia, Europe, Japan, Europe, Germany, etc. enabled in this example.
 hideregion = dict()
-hideregion["Asia"] = "true"
+#hideregion["Asia"] = "true"
 #hideregion["Australia"] = "true"
-hideregion["Brazil"] = "true"
-hideregion["China"] = "true"
+#hideregion["Brazil"] = "true"
+#hideregion["China"] = "true"
 #hideregion["Europe, Japan"] = "true"
 #hideregion["Europe"] = "true"
-hideregion["France"] = "true"
+#hideregion["France"] = "true"
 #hideregion["Germany"] = "true"
-hideregion["Hong Kong"] = "true"
-hideregion["Italy"] = "true"
-hideregion["Japan"] = "true"
-hideregion["Korea"] = "true"
+#hideregion["Hong Kong"] = "true"
+#hideregion["Italy"] = "true"
+#hideregion["Japan"] = "true"
+#hideregion["Korea"] = "true"
 #hideregion["North America, Europe"] = "true"
 #hideregion["North America, Japan"] = "true"
 #hideregion["North America"] = "true"
-hideregion["Russia"] = "true"
-hideregion["Spain"] = "true"
-hideregion["The Netherlands"] = "true"
+#hideregion["Russia"] = "true"
+#hideregion["Spain"] = "true"
+#hideregion["The Netherlands"] = "true"
 #hideregion["United Kingdom"] = "true"
 #hideregion["World"] = "true"
+
+# Comment/uncomment to exclude specific regions
+exclregion = dict()
+exclregion["Asia"] = "true"
+exclregion["Australia"] = "true"
+exclregion["Brazil"] = "true"
+exclregion["China"] = "true"
+#exclregion["Europe, Japan"] = "true"
+#exclregion["Europe"] = "true"
+exclregion["France"] = "true"
+#exclregion["Germany"] = "true"
+exclregion["Hong Kong"] = "true"
+exclregion["Italy"] = "true"
+exclregion["Japan"] = "true"
+exclregion["Korea"] = "true"
+#exclregion["North America, Europe"] = "true"
+#exclregion["North America, Japan"] = "true"
+#exclregion["North America"] = "true"
+exclregion["Russia"] = "true"
+exclregion["Spain"] = "true"
+exclregion["The Netherlands"] = "true"
+#exclregion["United Kingdom"] = "true"
+#exclregion["World"] = "true"
+
+#Exclude files with this names
+exclname = []
+exclname.append("gamelist")
 
 ###edits should not be required below here###
 playercount = dict()
@@ -166,13 +195,16 @@ for platform in platforms.keys():
             this_game = dict()
 			
             if (favorites_only == False) or (favorites_only == True and game.find("Favorite").text == 'true'):
-			
-                print("%s: %s" % (platform_lb, game.find("Title").text))
 				
                 rom_path = game.find("ApplicationPath").text        
                 this_game["path"]="./" + os.path.basename(r'%s' % game.find("ApplicationPath").text)
 				
-                this_game["name"]=game.find("Title").text
+                if game.find("Title") != None:
+                  this_game["name"]=game.find("Title").text
+                  if this_game["name"] in exclname:
+                    continue
+                else:
+                  continue
 
                 if not game.find("Notes") is None:
                     this_game["desc"]=game.find("Notes").text
@@ -187,6 +219,13 @@ for platform in platforms.keys():
 
                 if not game.find("StarRating") is None:    
                     this_game["rating"]=(int(game.find("StarRating").text)*2/10)
+                    
+                    if min_rating > 0.0 and float(game.find("StarRating").text) < min_rating:
+                      continue
+                      
+                if not game.find("CommunityStarRating") is None:
+                    if min_community_rating > 0.0 and float(game.find("CommunityStarRating").text) < min_community_rating:
+                      continue
 
                 if not game.find("ReleaseDate") is None:
                     this_game["releasedate"]=game.find("ReleaseDate").text.replace("-","").split("T")[0] + "T000000"
@@ -212,6 +251,9 @@ for platform in platforms.keys():
      
                 if not game.find("Region") is None and game.find("Region").text in hideregion.keys():
                     this_game["hidden"]=hideregion[game.find("Region").text]
+                if not game.find("Region") is None and game.find("Region").text in exclregion.keys():
+                    if hideregion[game.find("Region").text] == "true":
+                      continue
                 elif not game.find("Hide") is None and game_hide == True:
                     this_game["hidden"]=game.find("Hide").text
                 elif not game.find("Broken") is None and game_broken == True:
@@ -222,6 +264,9 @@ for platform in platforms.keys():
                 if not game.find("Favorite") is None:
                     this_game["favorite"]=game.find("Favorite").text
 					
+			
+                print("%s: %s" % (platform_lb, game.find("Title").text))
+                
                 games_found.append(this_game)
 
                 save_image(image_path, output_image_dir)
@@ -229,7 +274,7 @@ for platform in platforms.keys():
                 copy(rom_path, output_roms_platform)
 
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             
     top = ET.Element('gameList')
     for game in games_found:
