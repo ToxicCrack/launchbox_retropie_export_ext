@@ -6,6 +6,8 @@ from shutil import copy
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
+#https://github.com/ToxicCrack/launchbox_retropie_export_ext
+
 # Change the path to your launchbox folder.
 lb_dir = r'D:\Users\ToxicCrack\LaunchBox'
 
