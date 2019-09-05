@@ -1,6 +1,7 @@
 import glob
 import io
 import os
+import traceback
 from PIL import Image
 from shutil import copy
 import xml.etree.ElementTree as ET
@@ -26,22 +27,25 @@ game_hide=True
 # minimum ratings
 # set it to 0.0 to disable
 min_rating = 0.0
-min_community_rating = 3.5
+min_community_rating = 3.0
+
+# Save Community Rating instead of User Rating
+use_community_rating = True
 	
 # Choose platforms (comment/uncomment as needed).
 # The first string in each pair is the Launchbox platform filename, the second is the RetroPie folder name.
 platforms = dict()
-#platforms["Arcade"] = "arcade"
-#platforms["Nintendo 64"] = "n64"
-#platforms["Nintendo Entertainment System"] = "nes"
-#platforms["Nintendo Game Boy Advance"] = "gba"
+platforms["Arcade"] = "arcade"
+platforms["Nintendo 64"] = "n64"
+platforms["Nintendo Entertainment System"] = "nes"
+platforms["Nintendo Game Boy Advance"] = "gba"
 #platforms["Nintendo Game Boy Color"] = "gbc"
-#platforms["Nintendo Game Boy"] = "gb"
+platforms["Nintendo Game Boy"] = "gb"
 #platforms["Sega 32X"] = "sega32x"
 #platforms["Sega Game Gear"] = "gamegear"
-#platforms["Sega Genesis"] = "genesis"
-#platforms["Sega Master System"] = "mastersystem"
-#platforms["Sony Playstation"] = "psx"
+platforms["Sega Genesis"] = "genesis"
+platforms["Sega Master System"] = "mastersystem"
+platforms["Sony Playstation"] = "psx"
 platforms["Super Nintendo Entertainment System"] = "snes"
 
 # Comment/uncomment to change content rating for kids.
@@ -220,12 +224,16 @@ for platform in platforms.keys():
                     this_game["image"]=""
 
                 if not game.find("StarRating") is None:    
-                    this_game["rating"]=(int(game.find("StarRating").text)*2/10)
+                    if not use_community_rating:
+                      this_game["rating"]=(float(game.find("StarRating").text)*2/10)
                     
                     if min_rating > 0.0 and float(game.find("StarRating").text) < min_rating:
                       continue
                       
                 if not game.find("CommunityStarRating") is None:
+                    if use_community_rating:
+                      this_game["rating"]=(float(game.find("CommunityStarRating").text)*2/10)
+                      
                     if min_community_rating > 0.0 and float(game.find("CommunityStarRating").text) < min_community_rating:
                       continue
 
@@ -254,7 +262,7 @@ for platform in platforms.keys():
                 if not game.find("Region") is None and game.find("Region").text in hideregion.keys():
                     this_game["hidden"]=hideregion[game.find("Region").text]
                 if not game.find("Region") is None and game.find("Region").text in exclregion.keys():
-                    if hideregion[game.find("Region").text] == "true":
+                    if exclregion[game.find("Region").text] == "true":
                       continue
                 elif not game.find("Hide") is None and game_hide == True:
                     this_game["hidden"]=game.find("Hide").text
@@ -267,13 +275,22 @@ for platform in platforms.keys():
                     this_game["favorite"]=game.find("Favorite").text
 					
 			
-                print("%s: %s" % (platform_lb, game.find("Title").text))
                 
+                
+                
+
+                try:
+                  copy(rom_path, output_roms_platform)
+                except FileNotFoundError:
+                  print("%s: %s | NOT FOUND!" % (platform_lb, game.find("Title").text))
+                  continue
+                try:
+                  save_image(image_path, output_image_dir)
+                except NameError:
+                  #print("image_path not set")
+                  pass
+                print("%s: %s" % (platform_lb, game.find("Title").text))
                 games_found.append(this_game)
-
-                save_image(image_path, output_image_dir)
-
-                copy(rom_path, output_roms_platform)
 
         except Exception as e:
             print(traceback.format_exc())
