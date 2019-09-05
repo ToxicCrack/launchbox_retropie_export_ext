@@ -35,18 +35,18 @@ use_community_rating = True
 # Choose platforms (comment/uncomment as needed).
 # The first string in each pair is the Launchbox platform filename, the second is the RetroPie folder name.
 platforms = dict()
-platforms["Arcade"] = "arcade"
-platforms["Nintendo 64"] = "n64"
-platforms["Nintendo Entertainment System"] = "nes"
-platforms["Nintendo Game Boy Advance"] = "gba"
+#platforms["Arcade"] = "arcade"
+#platforms["Nintendo 64"] = "n64"
+#platforms["Nintendo Entertainment System"] = "nes"
+#platforms["Nintendo Game Boy Advance"] = "gba"
 #platforms["Nintendo Game Boy Color"] = "gbc"
-platforms["Nintendo Game Boy"] = "gb"
+#platforms["Nintendo Game Boy"] = "gb"
 #platforms["Sega 32X"] = "sega32x"
 #platforms["Sega Game Gear"] = "gamegear"
-platforms["Sega Genesis"] = "genesis"
-platforms["Sega Master System"] = "mastersystem"
+#platforms["Sega Genesis"] = "genesis"
+#platforms["Sega Master System"] = "mastersystem"
 platforms["Sony Playstation"] = "psx"
-platforms["Super Nintendo Entertainment System"] = "snes"
+#platforms["Super Nintendo Entertainment System"] = "snes"
 
 # Comment/uncomment to change content rating for kids.
 kidrating = dict()
@@ -225,14 +225,14 @@ for platform in platforms.keys():
 
                 if not game.find("StarRating") is None:    
                     if not use_community_rating:
-                      this_game["rating"]=(float(game.find("StarRating").text)*2/10)
+                      this_game["rating"]="%s" % (float(game.find("StarRating").text)*2/10)
                     
                     if min_rating > 0.0 and float(game.find("StarRating").text) < min_rating:
                       continue
                       
                 if not game.find("CommunityStarRating") is None:
                     if use_community_rating:
-                      this_game["rating"]=(float(game.find("CommunityStarRating").text)*2/10)
+                      this_game["rating"]="%s" % (float(game.find("CommunityStarRating").text)*2/10)
                       
                     if min_community_rating > 0.0 and float(game.find("CommunityStarRating").text) < min_community_rating:
                       continue
@@ -252,7 +252,7 @@ for platform in platforms.keys():
                 if not game.find("PlayMode") is None and game.find("PlayMode").text in playercount.keys():
                     this_game["players"]=playercount[game.find("PlayMode").text]
                 else:
-                    this_game["players"]="1?"
+                    this_game["players"]="1"
 
                 if not game.find("Rating") is None and game.find("Rating").text in kidrating.keys():
                     this_game["kidgame"]=kidrating[game.find("Rating").text]
@@ -307,4 +307,4 @@ for platform in platforms.keys():
         with io.open(output_xml, "w", encoding="utf-8") as f:
             f.write(xmlstr)
     except Exception as e:
-            print(e)
+            print(traceback.format_exc())
