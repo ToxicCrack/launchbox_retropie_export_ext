@@ -6,6 +6,7 @@ from PIL import Image
 from shutil import copy
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import pprint
 
 #https://github.com/ToxicCrack/launchbox_retropie_export_ext
 
@@ -27,26 +28,29 @@ game_hide=True
 # minimum ratings
 # set it to 0.0 to disable
 min_rating = 0.0
-min_community_rating = 3.0
+min_community_rating = 3.5
 
 # Save Community Rating instead of User Rating
 use_community_rating = True
-	
+
 # Choose platforms (comment/uncomment as needed).
 # The first string in each pair is the Launchbox platform filename, the second is the RetroPie folder name.
 platforms = dict()
 #platforms["Arcade"] = "arcade"
-#platforms["Nintendo 64"] = "n64"
-#platforms["Nintendo Entertainment System"] = "nes"
-#platforms["Nintendo Game Boy Advance"] = "gba"
-#platforms["Nintendo Game Boy Color"] = "gbc"
-#platforms["Nintendo Game Boy"] = "gb"
-#platforms["Sega 32X"] = "sega32x"
+platforms["Nintendo 64"] = "n64"
+platforms["Nintendo Entertainment System"] = "nes"
+platforms["Nintendo Game Boy Advance"] = "gba"
+platforms["Nintendo Game Boy Color"] = "gbc"
+platforms["Nintendo Game Boy"] = "gb"
+platforms["Nintendo DS"] = "nds"
+platforms["Sega 32X"] = "sega32x"
 #platforms["Sega Game Gear"] = "gamegear"
-#platforms["Sega Genesis"] = "genesis"
-#platforms["Sega Master System"] = "mastersystem"
+platforms["Sega Genesis"] = "genesis"
+platforms["Sega Master System"] = "mastersystem"
+platforms["Sega Dreamcast"] = "dc"
 platforms["Sony Playstation"] = "psx"
-#platforms["Super Nintendo Entertainment System"] = "snes"
+platforms["Sony PSP"] = "psp"
+platforms["Super Nintendo Entertainment System"] = "snes"
 
 # Comment/uncomment to change content rating for kids.
 kidrating = dict()
@@ -136,24 +140,29 @@ for platform in platforms.keys():
     output_xml_dir_platform = r'%s\%s' % (output_xml_dir, platform_rp)
     output_xml = r'%s\gamelist.xml' % output_xml_dir_platform
 
+
+    if not os.path.isfile(lb_platform_xml):
+        print(r'Couldnt find platform XML: %s' % lb_platform_xml)
+        continue
+
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
-        
+
     if not os.path.isdir(output_roms):
-        os.mkdir(output_roms)  
-        
+        os.mkdir(output_roms)
+
     if not os.path.isdir(output_roms_platform):
-        os.mkdir(output_roms_platform)    
+        os.mkdir(output_roms_platform)
 
     if not os.path.isdir(output_image_dir):
-        os.mkdir(output_image_dir)   
-        
+        os.mkdir(output_image_dir)
+
     if not os.path.isdir(output_xml_dir):
         os.mkdir(output_xml_dir)
 
     if not os.path.isdir(output_xml_dir_platform):
-        os.mkdir(output_xml_dir_platform)      
-       
+        os.mkdir(output_xml_dir_platform)
+
     xmltree = ET.parse(lb_platform_xml)
     games_found = []
     images = []
@@ -170,7 +179,7 @@ for platform in platforms.keys():
             image_name = os.path.basename(r'%s' % image_path)
             if image_name.startswith(input + '-01.'):
                 return [image_name, image_path]
-    
+
     def save_image(original_path, output_dir):
         try:
             filename = os.path.basename(r'%s' % original_path)
@@ -189,22 +198,24 @@ for platform in platforms.keys():
                 size = (width, height)
                 original_image.thumbnail(size)
                 original_image.save(r'%s' % output_dir + r'\%s' % filename)
-            else: 
-                copy(r'%s' % original_path, r'%s' % output_dir)              
+            else:
+                copy(r'%s' % original_path, r'%s' % output_dir)
         except Exception as e:
             print(r'Couldnt resize image, copying as is: %s' % original_path)
             copy(r'%s' % original_path, r'%s' % output_dir)
-            print(e)  
-            
+            print(e)
+
     for game in xmltree.getroot():
         try:
+            if game.tag != "Game":
+                continue
+
             this_game = dict()
-			
+
             if (favorites_only == False) or (favorites_only == True and game.find("Favorite").text == 'true'):
-				
-                rom_path = game.find("ApplicationPath").text        
+                rom_path = game.find("ApplicationPath").text
                 this_game["path"]="./" + os.path.basename(r'%s' % game.find("ApplicationPath").text)
-				
+
                 if game.find("Title") != None:
                   this_game["name"]=game.find("Title").text
                   if this_game["name"] in exclname:
@@ -218,22 +229,22 @@ for platform in platforms.keys():
                 try:
                     image_info = get_image(this_game["name"])
                     image_file = image_info[0]
-                    image_path = image_info[1]        
+                    image_path = image_info[1]
                     this_game["image"]="./images/" + image_file
                 except:
                     this_game["image"]=""
 
-                if not game.find("StarRating") is None:    
+                if not game.find("StarRating") is None:
                     if not use_community_rating:
                       this_game["rating"]="%s" % (float(game.find("StarRating").text)*2/10)
-                    
+
                     if min_rating > 0.0 and float(game.find("StarRating").text) < min_rating:
                       continue
-                      
+
                 if not game.find("CommunityStarRating") is None:
                     if use_community_rating:
                       this_game["rating"]="%s" % (float(game.find("CommunityStarRating").text)*2/10)
-                      
+
                     if min_community_rating > 0.0 and float(game.find("CommunityStarRating").text) < min_community_rating:
                       continue
 
@@ -243,12 +254,12 @@ for platform in platforms.keys():
                 if not game.find("Developer") is None:
                     this_game["developer"]=game.find("Developer").text
 
-                if not game.find("Publisher") is None: 
+                if not game.find("Publisher") is None:
                     this_game["publisher"]=game.find("Publisher").text
-  
+
                 if not game.find("Genre") is None:
                     this_game["genre"]=game.find("Genre").text
-    
+
                 if not game.find("PlayMode") is None and game.find("PlayMode").text in playercount.keys():
                     this_game["players"]=playercount[game.find("PlayMode").text]
                 else:
@@ -258,7 +269,7 @@ for platform in platforms.keys():
                     this_game["kidgame"]=kidrating[game.find("Rating").text]
                 else:
                     this_game["kidgame"]="false"
-     
+
                 if not game.find("Region") is None and game.find("Region").text in hideregion.keys():
                     this_game["hidden"]=hideregion[game.find("Region").text]
                 if not game.find("Region") is None and game.find("Region").text in exclregion.keys():
@@ -269,15 +280,15 @@ for platform in platforms.keys():
                 elif not game.find("Broken") is None and game_broken == True:
                     this_game["hidden"]=game.find("Broken").text
                 else:
-                    this_game["hidden"]="false"                					
-					
+                    this_game["hidden"]="false"
+
                 if not game.find("Favorite") is None:
                     this_game["favorite"]=game.find("Favorite").text
-					
-			
-                
-                
-                
+
+
+
+
+
 
                 try:
                   copy(rom_path, output_roms_platform)
@@ -294,12 +305,12 @@ for platform in platforms.keys():
 
         except Exception as e:
             print(traceback.format_exc())
-            
+
     top = ET.Element('gameList')
     for game in games_found:
         child = ET.SubElement(top, 'game')
         for key in game.keys():
-            child_content = ET.SubElement(child, key)    
+            child_content = ET.SubElement(child, key)
             child_content.text = game[key]
 
     try:
